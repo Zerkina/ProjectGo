@@ -56,14 +56,15 @@ func (h *Handler) MainPage(res http.ResponseWriter, req *http.Request) {
 	}
 
 	// 5. Сокращаем URL
-	shortURL := h.shortener.ShortenURL(originalURL)
+	shortID := h.shortener.ShortenURL(originalURL)
+	fmt.Fprint(res, shortID) // Возвращаем *только* shortID
 
 	// 6. Устанавливаем Content-Type для ответа как text/plain
 	res.Header().Set("Content-Type", "text/plain")
 
 	// 7. Отправляем код ответа 201 Created и сокращённый URL
 	res.WriteHeader(http.StatusCreated)
-	fmt.Fprint(res, shortURL)
+	fmt.Fprint(res, shortID)
 }
 
 // RedirectHandler обрабатывает GET запросы для редиректа

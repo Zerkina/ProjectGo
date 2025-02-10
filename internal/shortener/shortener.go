@@ -1,6 +1,8 @@
 package shortener
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"errors"
 	"sync"
 )
@@ -29,24 +31,33 @@ func (s *URLStore) GetOriginalURL(id string) (string, error) {
 	return originalURL, nil
 }
 
-// ShortenURL сокращает URL и сохраняет
+// ShortenURL сокращает URL и сохраняет, возвращая только shortID
 func (s *URLStore) ShortenURL(originalURL string) string {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	shortURL := shortenString(originalURL) // Используем функцию сокращения
+	// Генерируем уникальный shortID
+	shortID := generateShortID()
 
-	// Проверяем, не существует ли уже такой короткий URL. Если существует, добавляем случайный элемент "х"
-	for _, ok := s.urlMap[shortURL]; ok; {
-		shortURL = shortenString(originalURL + "x")
+	// Проверяем, не существует ли уже такой shortID. Если существует, генерируем новый.
+	for _, ok := s.urlMap[shortID]; ok; {
+		shortID = generateShortID()
 	}
-	s.urlMap[shortURL] = originalURL
-	return shortURL
+	s.urlMap[shortID] = originalURL // Сохраняем originalURL по ключу shortID
+	return shortID                  // Возвращаем только shortID
 }
 
-func shortenString(originalURL string) string {
-	if len(originalURL) > 8 {
-		return originalURL[:8]
+// generateShortID генерирует случайный shortID (base64 encoded)
+func generateShortID() string {
+	// Генерируем 12 байт случайных данных
+	bytes := make([]byte, 12)
+	if _, err := rand.Read(bytes); err != nil {
+		panic(err) // В production коде нужно обрабатывать эту ошибку корректно
 	}
-	return originalURL
+
+	// Кодируем в base64 (URL-safe)
+	shortID := base64.URLEncoding.EncodeToString(bytes)
+
+	// Обрезаем до нужной длины (например, 8 символов)
+	return shortID[:8]
 }
