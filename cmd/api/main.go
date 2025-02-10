@@ -3,19 +3,28 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/Zerkina/url-shortener/internal/handlers"
 )
 
 func main() {
-	handler := handlers.NewHandler()
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", handler.MainPage)
-	mux.HandleFunc("/{id}", handler.RedirectHandler)
+	// Инициализируем обработчик
+	h := handlers.NewHandler()
 
-	log.Println("Server listening on port 8080")
-	err := http.ListenAndServe(":8080", mux)
-	if err != nil {
-		panic(err)
-	}
+	// Регистрируем обработчики для маршрутов
+	http.HandleFunc("/", h.MainPage) // POST запросы на / обрабатывает MainPage (создание короткой ссылки)
+
+	// Обработчик для редиректа. Здесь важна правильная обработка пути.
+	http.HandleFunc("/redirect/", func(w http.ResponseWriter, r *http.Request) {
+		// Обрезаем "/redirect/" из пути, чтобы получить ID.
+		id := strings.TrimPrefix(r.URL.Path, "/redirect/")
+
+		// Передаем обрезанный ID в RedirectHandler
+		r.URL.Path = "/" + id // Изменяем путь запроса, чтобы RedirectHandler получил ID
+		h.RedirectHandler(w, r)
+	})
+
+	// Запускаем сервер
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

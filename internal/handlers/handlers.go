@@ -24,6 +24,7 @@ func NewHandler() *Handler {
 func (h *Handler) MainPage(res http.ResponseWriter, req *http.Request) {
 	// 1. Проверяем метод запроса - он должен быть POST
 	if req.Method != http.MethodPost {
+		log.Println("Method is not POST")
 		res.WriteHeader(http.StatusBadRequest)
 		fmt.Fprint(res, "Ожидаем POST")
 		return
