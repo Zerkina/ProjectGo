@@ -12,8 +12,9 @@ import (
 	"github.com/Zerkina/url-shortener/internal/shortener"
 )
 
+// Handler структура для обработчиков
 type Handler struct {
-	shortener *shortener.URLStore
+	shortener shortener.Shortener // Тип - интерфейс
 }
 
 func NewHandler() *Handler {
