@@ -59,7 +59,7 @@ func (h *Handler) MainPage(res http.ResponseWriter, req *http.Request) {
 	// 5. Сокращаем URL
 	shortID := h.shortener.ShortenURL(originalURL)
 	shortenedURL := fmt.Sprintf("http://localhost:8080/%s", shortID) // Полный URL.
-	fmt.Fprint(res, shortenedURL)
+	// fmt.Fprint(res, shortenedURL)
 
 	// 6. Устанавливаем Content-Type для ответа как text/plain
 	res.Header().Set("Content-Type", "text/plain")
