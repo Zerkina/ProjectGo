@@ -3,13 +3,12 @@ package shortener
 import (
 	"crypto/rand"
 	"encoding/base64"
-	"errors"
-	"sync"
+	// "errors"
+	// "sync"
 )
 
 // URLStore хранит соответствия между короткими и длинными URL
 type URLStore struct {
-	mu     sync.RWMutex
 	urlMap map[string]string
 }
 
@@ -20,29 +19,22 @@ func NewURLStore() *URLStore {
 	}
 }
 
-// GetOriginalURL возвращает оригинальный URL по короткому ID
-func (s *URLStore) GetOriginalURL(id string) (string, error) {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	originalURL, ok := s.urlMap[id]
-	if !ok {
-		return "", errors.New("URL not found")
-	}
-	return originalURL, nil
+type Shortener interface {
+	ShortenURL(originalURL string) string
+	ExpandURL(shortID string) (string, bool)
+}
+
+// ExpandURL возвращает оригинальный URL по короткому ID
+func (s *URLStore) ExpandURL(shortID string) (string, bool) {
+	originalURL, ok := s.urlMap[shortID]
+	return originalURL, ok
 }
 
 // ShortenURL сокращает URL и сохраняет, возвращая только shortID
 func (s *URLStore) ShortenURL(originalURL string) string {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	// Генерируем уникальный shortID
 	shortID := generateShortID()
 
-	// Проверяем, не существует ли уже такой shortID. Если существует, генерируем новый.
-	for _, ok := s.urlMap[shortID]; ok; {
-		shortID = generateShortID()
-	}
 	s.urlMap[shortID] = originalURL // Сохраняем originalURL по ключу shortID
 	return shortID                  // Возвращаем только shortID
 }

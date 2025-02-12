@@ -6,7 +6,8 @@ import (
 	"log"
 	"net/http"
 	"net/url"
-	"strings"
+
+	// "strings"
 
 	"github.com/Zerkina/url-shortener/internal/shortener"
 )
@@ -69,25 +70,30 @@ func (h *Handler) MainPage(res http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(res, shortenedURL)
 }
 
-// RedirectHandler обрабатывает GET запросы для редиректа
-func (h *Handler) RedirectHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// Redirect обработчик для GET запроса /{id} (редирект на оригинальный URL).
+func (h *Handler) Redirect(res http.ResponseWriter, req *http.Request) {
+	// 1. Проверяем метод запроса
+	if req.Method != http.MethodGet {
+		log.Println("Method is not GET")
+		res.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(res, "Ожидаем GET")
 		return
 	}
 
-	// Извлекаем ID из URL
-	id := strings.TrimPrefix(r.URL.Path, "/")
+	// 2. Извлекаем shortID из пути URL
+	shortID := req.URL.Path[1:] // Получаем ID из пути (обрезаем первый '/')
+	log.Printf("Attempting to redirect shortID: %s", shortID)
 
-	// Получаем оригинальный URL из shortener (используем хранилище)
-	originalURL, err := h.shortener.GetOriginalURL(id)
-	if err != nil {
-		log.Println("Error getting original URL:", err)
-		http.Error(w, "Invalid URL", http.StatusBadRequest)
+	// 3. Ищем оригинальный URL по shortID
+	originalURL, ok := h.shortener.ExpandURL(shortID)
+	if !ok {
+		log.Printf("Short URL not found: %s", shortID)
+		res.WriteHeader(http.StatusBadRequest)
+		fmt.Fprint(res, "Invalid short URL")
 		return
 	}
 
-	// Выполняем редирект
-	w.Header().Set("Location", originalURL)
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	// 4. Устанавливаем заголовок Location и код 307
+	res.Header().Set("Location", originalURL)
+	res.WriteHeader(http.StatusTemporaryRedirect) // 307 Temporary Redirect
 }
